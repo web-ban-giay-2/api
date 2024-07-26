@@ -18,6 +18,10 @@ namespace api_web_ban_giay.Mappers
                 TenTaiKhoan = donhang.TaiKhoan.Username,
                 TongTien = donhang.Dh_ChiTiets?.Sum(x => x.SoLuong * x.Product.Price) ?? 0,
                 Dh_ChiTiets = donhang.Dh_ChiTiets?.Select(x => x.Dh_ChiTietToDonHang()).ToList(),
+                HoTen = donhang.ThongTin_NhanHang?.HoTen ?? "",
+                SDT = donhang.ThongTin_NhanHang?.SDT ?? "",
+                DiaChi = donhang.ThongTin_NhanHang?.DiaChi ?? "",
+                GhiChu = donhang.ThongTin_NhanHang?.GhiChu ?? ""
             };
 
         }

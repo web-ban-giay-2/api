@@ -31,6 +31,31 @@ namespace api_web_ban_giay.Controllers
             return await _context.Trademark.ToListAsync();
         }
 
+        [HttpGet("form-home-shop")]
+        public async Task<ActionResult<IEnumerable<Trademark>>> GetTrademarkFormHome()
+        {
+            var trademarkWithProduct = await _context.Trademark
+                .GroupJoin(
+                    _context.Product,
+                    t => t.Id,
+                    p => p.TrademarkId,
+                    (t, products) => new { Trademark = t, Products = products }
+                )
+                .SelectMany(
+                    x => x.Products.DefaultIfEmpty(),
+                    (t, p) => new { Trademark = t.Trademark, Product = p }
+                )
+                .GroupBy(x => x.Trademark)
+                .Select(g => new
+                {
+                    Id = g.Key.Id,
+                    Name = g.Key.Name,
+                    CountProduct = g.Count(x => x.Product != null), // Đếm số lượng product khác null
+                })
+                .ToListAsync();
+            return Ok(trademarkWithProduct);
+        }
+
         // GET: api/Trademark/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Trademark>> GetTrademark(int id)
@@ -94,15 +119,27 @@ namespace api_web_ban_giay.Controllers
         public async Task<IActionResult> DeleteTrademark(int id)
         {
             var trademark = await _context.Trademark.FindAsync(id);
+            var products = await _context.Product.Where(x => x.TrademarkId == id).ToListAsync();
             if (trademark == null)
             {
                 return NotFound();
             }
-
+            if(products.Count > 0)
+            {
+                return Ok(new
+                {
+                    code = 401,
+                    message = "Đã có sản phẩm thuộc thương hiệu này. Không thể xoá!"
+                });
+            }
             _context.Trademark.Remove(trademark);
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok( new
+            {
+                code = 200,
+                message = "Xoá thành công!"
+            });
         }
 
         private bool TrademarkExists(int id)

@@ -21,6 +21,7 @@ namespace api_web_ban_giay.Data
         public DbSet<api_web_ban_giay.Models.TaiKhoan> TaiKhoan { get; set; } = default!;
         public DbSet<api_web_ban_giay.Models.Dh_ChiTiet> Dh_ChiTiet { get; set; } = default!;
         public DbSet<api_web_ban_giay.Models.DonHang> DonHang { get; set; } = default!;
+        public DbSet<api_web_ban_giay.Models.ThongTin_NhanHang> ThongTin_NhanHang { get; set; } = default!;
     }
 
 }

@@ -9,5 +9,6 @@
         public int TaiKhoanId { get; set; }
         public TaiKhoan? TaiKhoan { get; set; }
         public ICollection<Dh_ChiTiet>? Dh_ChiTiets { get; set; }
+        public ThongTin_NhanHang? ThongTin_NhanHang { get; set; }
     }
 }

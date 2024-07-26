@@ -28,9 +28,67 @@ namespace api_web_ban_giay.Controllers
         public async Task<ActionResult<IEnumerable<Product>>> GetProduct()
         {
             var product = await _context.Product
+                .Where(x => x.TrangThai == true)
                 .Include(x => x.Images)
                 .Include(x => x.Trademark)
                 .Include(x => x.ProductDetails)
+                .OrderByDescending(x => x.Id)
+                .Take(8)
+                .ToListAsync();
+            return Ok(product.Select(x => x.ToGetProdductDto()));
+        }
+
+        [HttpGet("getAll-form-admin/{page}")]
+        public async Task<ActionResult<IEnumerable<Product>>> GetAllFormAdmin(int page)
+        {
+            int pageSize = 5;
+            int totalItems = await _context.Product.CountAsync();
+            int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+            if (page < 1 || page > totalPages)
+            {
+                return BadRequest("Invalid page number");
+            }
+            var product = await _context.Product
+                .Include(x => x.Images)
+                .Include(x => x.Trademark)
+                .Include(x => x.ProductDetails)
+                .OrderByDescending(x => x.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+            /*return Ok(product.Select(x => x.ToGetProdductDto()));*/
+            return Ok(new
+            {
+                TotalItems = totalItems,
+                TotalPages = totalPages,
+                CurrentPage = page,
+                Items = product.Select(x => x.ToGetProdductDto())
+            });
+        }
+        [HttpGet("sp-tuongtu-form-home/{id}")]
+        public async Task<ActionResult<IEnumerable<Product>>> GetProductTuongTu(int id)
+        {
+            var pro = await _context.Product.FindAsync(id);
+            var product = await _context.Product
+                .Where(x => x.TrangThai == true)
+                .Include(x => x.Images)
+                .Include(x => x.Trademark)
+                .Include(x => x.ProductDetails)
+                .Where(x => x.TrademarkId == pro.TrademarkId)
+                .OrderByDescending(x => x.Id)
+                .Take(6)
+                .ToListAsync();
+            return Ok(product.Select(x => x.ToGetProdductDto()));
+        }
+        [HttpGet("getAll-form-shop")]
+        public async Task<ActionResult<IEnumerable<Product>>> GetAllFormShop()
+        {
+            var product = await _context.Product
+                .Where(x => x.TrangThai == true)
+                .Include(x => x.Images)
+                .Include(x => x.Trademark)
+                .Include(x => x.ProductDetails)
+                .OrderByDescending(x => x.Id)
                 .ToListAsync();
             return Ok(product.Select(x => x.ToGetProdductDto()));
         }
@@ -53,6 +111,7 @@ namespace api_web_ban_giay.Controllers
                 .ToList();
 
             var Allproduct = await _context.Product
+                .Where(x => x.TrangThai == true)
                 .Include(x => x.Images)
                 .Include(x => x.Trademark)
                 .Include(x => x.ProductDetails)
@@ -66,6 +125,7 @@ namespace api_web_ban_giay.Controllers
                           (p, q) => new { Product = p, q.TotalQuantity })
                     .OrderByDescending(x => x.TotalQuantity)
                     .Select(x => x.Product)
+                    .Take(6)
                     .ToList();
                 return Ok(orderedProducts.Select(x => x.ToGetProdductDto()));
             } 
@@ -98,6 +158,7 @@ namespace api_web_ban_giay.Controllers
         public async Task<ActionResult<Product>> GetProductFromHome(int id)
         {
             var product = await _context.Product
+                .Where(x => x.TrangThai == true)
                 .Include(x => x.Images)
                 .Include(x => x.Trademark)
                 .Include(x => x.ProductDetails)
@@ -153,6 +214,7 @@ namespace api_web_ban_giay.Controllers
             return CreatedAtAction("GetProduct", new { id = productModel.Id }, productModel);
         }
 
+
         // DELETE: api/Product/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteProduct(int id)
@@ -163,10 +225,13 @@ namespace api_web_ban_giay.Controllers
                 return NotFound();
             }
 
-            _context.Product.Remove(product);
+            product.TrangThai = false;
             await _context.SaveChangesAsync();
-
-            return NoContent();
+            return Ok(new
+            {
+                code = 200,
+                message = "Xoa thanh cong"
+            });
         }
 
         private bool ProductExists(int id)

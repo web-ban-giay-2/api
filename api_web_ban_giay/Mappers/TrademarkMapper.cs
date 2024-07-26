@@ -1,6 +1,7 @@
 ﻿using api_web_ban_giay.Dtos.Product;
 using api_web_ban_giay.Dtos.TradeMark;
 using api_web_ban_giay.Models;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace api_web_ban_giay.Mappers
 {
@@ -21,5 +22,15 @@ namespace api_web_ban_giay.Mappers
                 Name = updateDto.Name,
             };
         }
+       /* public static GetFormHomeDto ToGetFormHomeDto(this Trademark trademark)
+        {
+            return new GetFormHomeDto
+            {
+                Id = trademark.Id,
+                Name = trademark.Name,
+                CountProduct = trademark.Products.Count
+            };
+        }*/
     }
+    
 }

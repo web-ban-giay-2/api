@@ -11,6 +11,9 @@ using api_web_ban_giay.Dtos.Cart;
 using api_web_ban_giay.Mappers;
 using api_web_ban_giay.DTOs;
 using api_web_ban_giay.General;
+using System.Drawing.Printing;
+using Azure;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace api_web_ban_giay.Controllers
 {
@@ -43,13 +46,12 @@ namespace api_web_ban_giay.Controllers
                 .ToListAsync();
             return Ok(dh.Select(x => x.ToGetAllDonHangDto()));
         }
-        [HttpGet]
-        [Route("ChoDuyet")]
-        public async Task<ActionResult<IEnumerable<DonHang>>> GetDonHangChoDuyet()
+        [HttpGet("{UserId}")]
+        public async Task<ActionResult<IEnumerable<DonHang>>> GetDonHang(int UserId)
         {
+            var pro = await _context.Product.ToListAsync();
             var dh = await _context.DonHang
-                .Where(x => x.TrangThai_DonHang == "Chờ duyệt")
-                .OrderByDescending(x => x.TimeCreate)
+                .Where(x => x.TaiKhoanId == UserId)
                 .Include(x => x.TaiKhoan)
                 .Include(x => x.Dh_ChiTiets)
                 .ThenInclude(x => x.Product)
@@ -57,14 +59,55 @@ namespace api_web_ban_giay.Controllers
                 .Include(x => x.Dh_ChiTiets)
                 .ThenInclude(x => x.Product)
                 .ThenInclude(x => x.Trademark)
+                .OrderByDescending(x => x.TimeCreate)
                 .ToListAsync();
             return Ok(dh.Select(x => x.ToGetAllDonHangDto()));
         }
-
         [HttpGet]
-        [Route("DangGiao")]
-        public async Task<ActionResult<IEnumerable<DonHang>>> GetDonHangDangGiao()
+        [Route("ChoDuyet/{page}")]
+        public async Task<ActionResult<IEnumerable<DonHang>>> GetDonHangChoDuyet(int page)
         {
+            int pageSize = 5;
+            int totalItems = await _context.DonHang.CountAsync(x => x.TrangThai_DonHang == "Chờ duyệt");
+            int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+            if (page < 1 || page > totalPages)
+            {
+                return BadRequest("Invalid page number");
+            }
+            var dh = await _context.DonHang
+                .Where(x => x.TrangThai_DonHang == "Chờ duyệt" )
+                .OrderByDescending(x => x.TimeCreate)
+                .Include(x => x.TaiKhoan)
+                .Include(x => x.ThongTin_NhanHang)
+                .Include(x => x.Dh_ChiTiets)
+                .Include(x => x.Dh_ChiTiets)
+                .ThenInclude(x => x.Product)
+                .ThenInclude(x => x.Images)
+                .Include(x => x.Dh_ChiTiets)
+                .ThenInclude(x => x.Product)
+                .ThenInclude(x => x.Trademark)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+            return Ok(new
+            {
+                TotalItems = totalItems,
+                TotalPages = totalPages,
+                CurrentPage = page,
+                Items = dh.Select(x => x.ToGetAllDonHangDto())
+            });
+        }
+        [HttpGet]
+        [Route("DangGiao/{page}")]
+        public async Task<ActionResult<IEnumerable<DonHang>>> GetDonHangDangGiao(int page)
+        {
+            int pageSize = 5;
+            int totalItems = await _context.DonHang.CountAsync(x => x.TrangThai_DonHang == "Đang giao");
+            int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+            if (page < 1 || page > totalPages)
+            {
+                return BadRequest("Invalid page number");
+            }
             var dh = await _context.DonHang
                 .Where(x => x.TrangThai_DonHang == "Đang giao")
                 .OrderByDescending(x => x.TimeCreate)
@@ -75,14 +118,29 @@ namespace api_web_ban_giay.Controllers
                 .Include(x => x.Dh_ChiTiets)
                 .ThenInclude(x => x.Product)
                 .ThenInclude(x => x.Trademark)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
-            return Ok(dh.Select(x => x.ToGetAllDonHangDto()));
+            return Ok(new
+            {
+                TotalItems = totalItems,
+                TotalPages = totalPages,
+                CurrentPage = page,
+                Items = dh.Select(x => x.ToGetAllDonHangDto())
+            });
         }
 
         [HttpGet]
-        [Route("DaGiao")]
-        public async Task<ActionResult<IEnumerable<DonHang>>> GetDonHangDaGiao()
+        [Route("DaGiao/{page}")]
+        public async Task<ActionResult<IEnumerable<DonHang>>> GetDonHangDaGiao(int page)
         {
+            int pageSize = 5;
+            int totalItems = await _context.DonHang.CountAsync(x => x.TrangThai_DonHang == "Đã giao");
+            int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+            if (page < 1 || page > totalPages)
+            {
+                return BadRequest("Invalid page number");
+            }
             var dh = await _context.DonHang
                 .Where(x => x.TrangThai_DonHang == "Đã giao")
                 .OrderByDescending(x => x.TimeCreate)
@@ -93,14 +151,29 @@ namespace api_web_ban_giay.Controllers
                 .Include(x => x.Dh_ChiTiets)
                 .ThenInclude(x => x.Product)
                 .ThenInclude(x => x.Trademark)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
-            return Ok(dh.Select(x => x.ToGetAllDonHangDto()));
+            return Ok(new
+            {
+                TotalItems = totalItems,
+                TotalPages = totalPages,
+                CurrentPage = page,
+                Items = dh.Select(x => x.ToGetAllDonHangDto())
+            });
         }
 
         [HttpGet]
-        [Route("DaHuy")]
-        public async Task<ActionResult<IEnumerable<DonHang>>> GetDonHangDaHuy()
+        [Route("DaHuy/{page}")]
+        public async Task<ActionResult<IEnumerable<DonHang>>> GetDonHangDaHuy(int page)
         {
+            int pageSize = 5;
+            int totalItems = await _context.DonHang.CountAsync(x => x.TrangThai_DonHang == "Đã huỷ");
+            int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+            if (page < 1 || page > totalPages)
+            {
+                return BadRequest("Invalid page number");
+            }
             var dh = await _context.DonHang
                 .Where(x => x.TrangThai_DonHang == "Đã huỷ")
                 .OrderByDescending(x => x.TimeCreate)
@@ -111,8 +184,16 @@ namespace api_web_ban_giay.Controllers
                 .Include(x => x.Dh_ChiTiets)
                 .ThenInclude(x => x.Product)
                 .ThenInclude(x => x.Trademark)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
-            return Ok(dh.Select(x => x.ToGetAllDonHangDto()));
+            return Ok(new
+            {
+                TotalItems = totalItems,
+                TotalPages = totalPages,
+                CurrentPage = page,
+                Items = dh.Select(x => x.ToGetAllDonHangDto())
+            });
         }
 
         [HttpGet]
@@ -159,8 +240,9 @@ namespace api_web_ban_giay.Controllers
             vnpay.AddRequestData("vnp_Command", "pay");
 
             vnpay.AddRequestData("vnp_TmnCode", vnp_TmnCode);
+            var amount = model.Amount/1000;
 
-            vnpay.AddRequestData("vnp_Amount", $"{(model.Amount * 100)}000");
+            vnpay.AddRequestData("vnp_Amount", $"{(amount * 100)}000");
 
             vnpay.AddRequestData("vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss"));
 
@@ -170,6 +252,7 @@ namespace api_web_ban_giay.Controllers
 
             vnpay.AddRequestData("vnp_Locale", "vn");
 
+            var info = "Thanh toan don hang:" + model.Id;
             vnpay.AddRequestData("vnp_OrderInfo", model.Id);
 
             vnpay.AddRequestData("vnp_OrderType", "other");
@@ -217,9 +300,8 @@ namespace api_web_ban_giay.Controllers
                     _context.DonHang.Update(dh);
                     if (await _context.SaveChangesAsync() > 0)
                     {
-                        return Redirect($"https://app-user-a-fish.vercel.app/user-order");
+                        return Redirect($"http://localhost:5173/don-hang");
                     }
-
                 }
                 else
                 {
@@ -254,7 +336,7 @@ namespace api_web_ban_giay.Controllers
                 await _context.SaveChangesAsync();
             }
 
-            return Ok("Done");
+            return Ok(donhang.Id);
         }
 
         // DELETE: api/DonHang/5
